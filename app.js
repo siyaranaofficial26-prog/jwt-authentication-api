@@ -5,7 +5,6 @@ import bcrypt from "bcrypt";
 const app = express();
 app.use(express.json());
 
-//authorization middleware, to make sure, jiske paas token hai, that is the only one whos able to access the info
 function authenticateToken(req, res, next) {
 const authHeader = req.headers.authorization;
 const token = authHeader && authHeader.split(" ")[1];
@@ -25,7 +24,6 @@ jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
 });
 
 }
-//after the JWT middleware authenticates the user, fetch the latest profile from the database whuch you created
 app.get("/profile", authenticateToken, async (req, res) => {
     try{
      const data = await getUserById(req.user.id);
@@ -43,7 +41,7 @@ app.get("/profile", authenticateToken, async (req, res) => {
     }
 });
 
-//update name, phone, age bio
+
 app.put("/profile", authenticateToken, async (req, res) => {
     try{
     const {name, phone, age, bio, role} = req.body;
@@ -118,7 +116,7 @@ app.post("/register", async (req, res) => {
         message: "Proper name,email and password are required"
     });
 }
-    //to make sure multiple users with the same email id are not registered
+    
 const existingUser = await getUserByEmail(email);
 if (existingUser) {
 
@@ -126,7 +124,6 @@ if (existingUser) {
         message: "Email already exists"
     });
 }
-//if new user then , create the user using query and hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
     const id = await createUser(name,email, hashedPassword,phone, age, bio,role);
     res.status(201).json({
@@ -147,20 +144,18 @@ app.post("/login", async (req, res) => {
     try{
 const { email, password } = req.body;
 const user = await getUserByEmail(email);
-//to check if email is correct
 if (!user) {
     return res.status(400).json({
         message: "Invalid email or password"
     });
 }
-//to check if password is correct
 const isMatch = await bcrypt.compare(password, user.password);
 if (!isMatch) {
     return res.status(400).json({
         message: "Invalid email or password"
     });
 }
-const token = jwt.sign( //giving the user a token to access the protected routes, this token will be used to verify the user's identity and grant access to the requested resources.
+const token = jwt.sign( 
     {
         id: user.id,
         email: user.email
